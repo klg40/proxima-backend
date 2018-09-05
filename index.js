@@ -42,7 +42,7 @@ wss.on('connection', function (ws) {
   client[id] = ws;
   key.push({
     id : id,
-    remove : false,
+    principal : null,
     password : null,
   });
 
@@ -56,12 +56,13 @@ wss.on('connection', function (ws) {
       case 'connect' : Connect( req.pass ); break;
       case 'coords' : Coords( req.coords ); break;
       case 'click' : ClickElement( req.coordsElement ); break;
+      case 'clientWidth' : ClientWidth( req.value, id ); break;
+      case 'scroll' : ScrollWindow( req.value ); break;
     }
-    client[id].send(JSON.stringify(['info', key]));
+    // client[id].send(JSON.stringify(['info', key]));
   });
 
   function NewPass() {
-    console.log('NEWPASS');
     key.forEach( 
       item => { 
         item.id == id ? item.password = req.pass : false 
@@ -74,17 +75,30 @@ wss.on('connection', function (ws) {
   }
 
   function Connect( pass ) {
-    console.log('connect');
     key.forEach( item => {
       if ( item.password == pass ) {
         client[id].send(JSON.stringify(['success',item.id]));
         clientConnect = item.id;
+        item.principal = id;
+        console.log(key)
       }
     })
   }
 
+  function ClientWidth( clientWidth, id ) {
+    let principal;
+    key.forEach( item => {
+      item.id == id ? principal = item.principal : false;
+    });
+    client[principal].send(JSON.stringify(['clientWidth', clientWidth]))
+  }
+
+  function ScrollWindow( sizeScroll ){
+    client[clientConnect].send(JSON.stringify(['scroll', sizeScroll]))
+  }
+
   function Coords( coords ) {
-      client[clientConnect].send(JSON.stringify(['coords', coords]))
+    client[clientConnect].send(JSON.stringify(['coords', coords]))
   }
 
   function generateID() {
